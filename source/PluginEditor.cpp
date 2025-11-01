@@ -6,9 +6,14 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     : AudioProcessorEditor (&p), processorRef (p)
 {
     juce::ignoreUnused (processorRef);
-    // Make sure that before the constructor has finished, you've set the
-    // editor's size to whatever you need it to be.
-    setSize (400, 300);
+
+    const auto items = viator::globals::Oversampling::items;
+    setComboBoxProps(m_oversampling_menu, items);
+    m_oversampling_Attach = std::make_unique<juce::AudioProcessorValueTreeState::ComboBoxAttachment>(processorRef.getTreeState(),
+                                                                                                     viator::parameters::oversamplingChoiceID,
+                                                                                                     m_oversampling_menu);
+
+    setSize (1000, 600);
 }
 
 AudioPluginAudioProcessorEditor::~AudioPluginAudioProcessorEditor()
@@ -18,16 +23,22 @@ AudioPluginAudioProcessorEditor::~AudioPluginAudioProcessorEditor()
 //==============================================================================
 void AudioPluginAudioProcessorEditor::paint (juce::Graphics& g)
 {
-    // (Our component is opaque, so we must completely fill the background with a solid colour)
-    g.fillAll (getLookAndFeel().findColour (juce::ResizableWindow::backgroundColourId));
-
-    g.setColour (juce::Colours::white);
-    g.setFont (15.0f);
-    g.drawFittedText ("Hello World!", getLocalBounds(), juce::Justification::centred, 1);
+    g.fillAll (juce::Colour(34, 40, 49));
 }
 
 void AudioPluginAudioProcessorEditor::resized()
 {
-    // This is generally where you'll want to lay out the positions of any
-    // subcomponents in your editor..
+    const auto padding = juce::roundToInt(getWidth() * 0.03);
+    const auto width = juce::roundToInt(getWidth() * 0.1);
+    const auto height = juce::roundToInt(getHeight() * 0.05);
+    const auto x = getWidth() - width - padding;
+    const auto y = padding;
+    m_oversampling_menu.setBounds(x, y, width, height);
+}
+
+void AudioPluginAudioProcessorEditor::setComboBoxProps(juce::ComboBox &box, const juce::StringArray &items)
+{
+    box.addItemList(items, 1);
+    box.setSelectedId(1, juce::dontSendNotification);
+    addAndMakeVisible(box);
 }

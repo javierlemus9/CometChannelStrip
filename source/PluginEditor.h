@@ -18,5 +18,9 @@ private:
     // access the processor object that created it.
     AudioPluginAudioProcessor& processorRef;
 
+    juce::ComboBox m_oversampling_menu;
+    std::unique_ptr<juce::AudioProcessorValueTreeState::ComboBoxAttachment> m_oversampling_Attach;
+    void setComboBoxProps(juce::ComboBox& box, const juce::StringArray& items);
+
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioPluginAudioProcessorEditor)
 };

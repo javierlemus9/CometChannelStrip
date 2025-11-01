@@ -10,8 +10,9 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
                       #endif
                        .withOutput ("Output", juce::AudioChannelSet::stereo(), true)
                      #endif
-                       )
+                       ), m_tree_state(*this, nullptr, "PARAMETERS", createParameterLayout())
 {
+    m_parameters = std::make_unique<viator::parameters::parameters>(m_tree_state);
 }
 
 AudioPluginAudioProcessor::~AudioPluginAudioProcessor()
@@ -83,12 +84,38 @@ void AudioPluginAudioProcessor::changeProgramName (int index, const juce::String
     juce::ignoreUnused (index, newName);
 }
 
+juce::AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::createParameterLayout()
+{
+    std::vector<std::unique_ptr<juce::RangedAudioParameter> > params;
+
+    const auto items = viator::globals::Oversampling::items;
+    params.push_back(std::make_unique<juce::AudioParameterChoice>(juce::ParameterID{viator::parameters::oversamplingChoiceID, 1},
+                                                                  viator::parameters::oversamplingChoiceName, items, 0));
+
+    return {params.begin(), params.end()};
+}
+
+void AudioPluginAudioProcessor::parameterChanged(const juce::String &parameterID, float newValue)
+{
+
+}
+
+void AudioPluginAudioProcessor::updateParameters()
+{
+    const auto oversampling_choice = m_parameters->oversamplingParam->getIndex();
+}
+
 //==============================================================================
 void AudioPluginAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
     // Use this method as the place to do any pre-playback
     // initialisation that you need..
     juce::ignoreUnused (sampleRate, samplesPerBlock);
+
+    for (int i = 0; i < m_process_blocks.size(); ++i)
+    {
+        m_process_blocks[i].prepare(sampleRate, samplesPerBlock, getTotalNumInputChannels(), i);
+    }
 }
 
 void AudioPluginAudioProcessor::releaseResources()
@@ -126,31 +153,17 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
 {
     juce::ignoreUnused (midiMessages);
 
+    updateParameters();
+
     juce::ScopedNoDenormals noDenormals;
-    auto totalNumInputChannels  = getTotalNumInputChannels();
-    auto totalNumOutputChannels = getTotalNumOutputChannels();
 
-    // In case we have more outputs than inputs, this code clears any output
-    // channels that didn't contain input data, (because these aren't
-    // guaranteed to be empty - they may contain garbage).
-    // This is here to avoid people getting screaming feedback
-    // when they first compile a plugin, but obviously you don't need to keep
-    // this code if your algorithm always overwrites all the output channels.
-    for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
-        buffer.clear (i, 0, buffer.getNumSamples());
-
-    // This is the place where you'd normally do the guts of your plugin's
-    // audio processing...
-    // Make sure to reset the state if your inner loop is processing
-    // the samples and the outer loop is handling the channels.
-    // Alternatively, you can process the samples with the channels
-    // interleaved by keeping the same state.
-    for (int channel = 0; channel < totalNumInputChannels; ++channel)
+    const auto oversampling_choice = m_parameters->oversamplingParam->getIndex();
+    if (oversampling_choice >= 0 && static_cast<size_t>(oversampling_choice) < m_process_blocks.size())
     {
-        auto* channelData = buffer.getWritePointer (channel);
-        juce::ignoreUnused (channelData);
-        // ..do something to the data...
+        m_process_blocks[static_cast<size_t>(oversampling_choice)].process(buffer, buffer.getNumSamples());
     }
+
+    buffer.applyGain(0.0f);
 }
 
 //==============================================================================

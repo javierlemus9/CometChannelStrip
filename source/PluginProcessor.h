@@ -1,9 +1,11 @@
 #pragma once
 
 #include <juce_audio_processors/juce_audio_processors.h>
-
+#include "Globals/Parameters.h"
+#include "Globals/Globals.h"
+#include "DSP/ProcessBlock.h"
 //==============================================================================
-class AudioPluginAudioProcessor final : public juce::AudioProcessor
+class AudioPluginAudioProcessor final : public juce::AudioProcessor, public juce::AudioProcessorValueTreeState::Listener
 {
 public:
     //==============================================================================
@@ -42,7 +44,18 @@ public:
     void getStateInformation (juce::MemoryBlock& destData) override;
     void setStateInformation (const void* data, int sizeInBytes) override;
 
+    juce::AudioProcessorValueTreeState& getTreeState() { return m_tree_state; }
 private:
+
+    juce::AudioProcessorValueTreeState m_tree_state;
+    juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
+    void parameterChanged (const juce::String &parameterID, float newValue);
+
+    void updateParameters();
+
+    std::unique_ptr<viator::parameters::parameters> m_parameters;
+
+    std::array<viator::dsp::ProcessBlock, 5> m_process_blocks;
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioPluginAudioProcessor)
 };
