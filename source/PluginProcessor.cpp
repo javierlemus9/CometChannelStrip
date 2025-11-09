@@ -91,6 +91,8 @@ juce::AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::c
     const auto items = viator::globals::Oversampling::items;
     params.push_back(std::make_unique<juce::AudioParameterChoice>(juce::ParameterID{viator::parameters::oversamplingChoiceID, 1},
                                                                   viator::parameters::oversamplingChoiceName, items, 0));
+    params.push_back(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{viator::parameters::consoleDriveID, 1},
+                                                                  viator::parameters::consoleDriveName, 0.0f, 10.0f, 0.0f));
 
     return {params.begin(), params.end()};
 }
@@ -103,6 +105,10 @@ void AudioPluginAudioProcessor::parameterChanged(const juce::String &parameterID
 void AudioPluginAudioProcessor::updateParameters()
 {
     const auto oversampling_choice = m_parameters->oversamplingParam->getIndex();
+    if (oversampling_choice >= 0 && static_cast<size_t>(oversampling_choice) < m_process_blocks.size())
+    {
+        m_process_blocks[static_cast<size_t>(oversampling_choice)].updateParameters(*m_parameters);
+    }
 }
 
 //==============================================================================
@@ -162,8 +168,6 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     {
         m_process_blocks[static_cast<size_t>(oversampling_choice)].process(buffer, buffer.getNumSamples());
     }
-
-    buffer.applyGain(0.0f);
 }
 
 //==============================================================================
@@ -174,7 +178,8 @@ bool AudioPluginAudioProcessor::hasEditor() const
 
 juce::AudioProcessorEditor* AudioPluginAudioProcessor::createEditor()
 {
-    return new AudioPluginAudioProcessorEditor (*this);
+    //return new AudioPluginAudioProcessorEditor (*this);
+    return new juce::GenericAudioProcessorEditor (*this);
 }
 
 //==============================================================================

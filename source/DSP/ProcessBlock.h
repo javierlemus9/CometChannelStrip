@@ -4,6 +4,7 @@
 
 #pragma once
 #include <juce_dsp/juce_dsp.h>
+#include "Modules/ConsoleModule.h"
 
 namespace viator::dsp
 {
@@ -25,20 +26,27 @@ namespace viator::dsp
                     juce::dsp::Oversampling<float>::FilterType::filterHalfBandPolyphaseIIR,
                     true);
             m_oversampler->initProcessing(spec.maximumBlockSize);
+
+            m_console_module.prepare(spec);
         }
 
         void process(juce::AudioBuffer<float>& buffer, const int num_samples)
         {
             const int num_oversampled_samples = num_samples * static_cast<int>(m_oversampler->getOversamplingFactor());
-
             juce::dsp::AudioBlock<float> block (buffer);
-
             auto up_sampled_block = m_oversampler->processSamplesUp(block);
-            up_sampled_block.multiplyBy(1000000.0f);
+            m_console_module.processBlock(up_sampled_block, num_oversampled_samples);
             m_oversampler->processSamplesDown(block);
+        }
+
+        void updateParameters(viator::parameters::parameters& parameters)
+        {
+            m_console_module.setDrive(parameters.consoleDriveParam->get() * 0.1f);
         }
 
     private:
         std::unique_ptr<juce::dsp::Oversampling<float>> m_oversampler;
+
+        viator::dsp::ConsoleModule<float> m_console_module;
     };
 }
