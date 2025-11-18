@@ -7,3 +7,4 @@
 #include "BaseEditor.h"
 #include "ReductionEditor.h"
 #include "AmplificationEditor.h"
+#include "TestEditor.h"

@@ -53,6 +53,9 @@ public:
     void removeProcessor(const int index);
     viator::dsp::processors::BaseProcessor* getProcessor(int index);
 
+    std::vector<std::unique_ptr<viator::dsp::processors::BaseProcessor>>& getProcessors() { return m_processors; }
+
+    std::atomic<bool> m_adding_processor {false};
 private:
 
     juce::AudioProcessorValueTreeState m_tree_state;

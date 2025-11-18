@@ -4,3 +4,4 @@
 
 #include "ReductionProcessor.h"
 #include "AmplificationProcessor.h"
+#include "TestProcessor.h"

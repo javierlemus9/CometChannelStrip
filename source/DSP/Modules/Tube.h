@@ -70,7 +70,7 @@ namespace viator::dsp
                     yn = processTube(yn, 1.0f, 1.5f, 1.0f, 4.0f, -1.5f);
                     yn = m_dc_filters[channel].processSample(static_cast<int>(channel), yn);
                     yn = m_miller_cap_filter[channel].processSample(static_cast<int>(channel), yn);
-                    yn *= 0.8f * drive_comp;
+                    yn *= 0.35f * drive_comp;
                     data[sample] = yn;
                 }
             }
@@ -131,7 +131,7 @@ namespace viator::dsp
                 }
             }
 
-            return yn;
+            return yn - offset;
         }
 
         void setDrive(const float value)

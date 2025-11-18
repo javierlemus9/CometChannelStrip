@@ -15,6 +15,13 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
     m_parameters = std::make_unique<viator::parameters::parameters>(m_tree_state);
 
     m_processors.clear();
+    DBG("Num processors: " << m_processors.size());
+    addProcessor(viator::dsp::processors::ProcessorType::kReduction);
+    DBG("Num processors: " << m_processors.size());
+    addProcessor(viator::dsp::processors::ProcessorType::kTest);
+    DBG("Num processors: " << m_processors.size());
+    addProcessor(viator::dsp::processors::ProcessorType::kReduction);
+    DBG("Num processors: " << m_processors.size());
 }
 
 AudioPluginAudioProcessor::~AudioPluginAudioProcessor()
@@ -139,11 +146,11 @@ void AudioPluginAudioProcessor::parameterChanged(const juce::String &parameterID
 
 void AudioPluginAudioProcessor::updateParameters()
 {
-    const auto oversampling_choice = m_parameters->oversamplingParam->getIndex();
-    if (oversampling_choice >= 0 && static_cast<size_t>(oversampling_choice) < m_process_blocks.size())
-    {
-        m_process_blocks[static_cast<size_t>(oversampling_choice)].updateParameters(*m_parameters);
-    }
+//    const auto oversampling_choice = m_parameters->oversamplingParam->getIndex();
+//    if (oversampling_choice >= 0 && static_cast<size_t>(oversampling_choice) < m_process_blocks.size())
+//    {
+//        m_process_blocks[static_cast<size_t>(oversampling_choice)].updateParameters(*m_parameters);
+//    }
 }
 
 //==============================================================================
@@ -210,11 +217,11 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
 
     juce::ScopedNoDenormals noDenormals;
 
-    const auto oversampling_choice = m_parameters->oversamplingParam->getIndex();
-    if (oversampling_choice >= 0 && static_cast<size_t>(oversampling_choice) < m_process_blocks.size())
-    {
-        m_process_blocks[static_cast<size_t>(oversampling_choice)].process(buffer, buffer.getNumSamples());
-    }
+//    const auto oversampling_choice = m_parameters->oversamplingParam->getIndex();
+//    if (oversampling_choice >= 0 && static_cast<size_t>(oversampling_choice) < m_process_blocks.size())
+//    {
+//        m_process_blocks[static_cast<size_t>(oversampling_choice)].process(buffer, buffer.getNumSamples());
+//    }
 
 //    for (const auto& processor : m_processors)
 //    {
@@ -282,8 +289,8 @@ bool AudioPluginAudioProcessor::hasEditor() const
 
 juce::AudioProcessorEditor* AudioPluginAudioProcessor::createEditor()
 {
-    //return new AudioPluginAudioProcessorEditor (*this);
-    return new juce::GenericAudioProcessorEditor (*this);
+    return new AudioPluginAudioProcessorEditor (*this);
+    //return new juce::GenericAudioProcessorEditor (*this);
 }
 
 //==============================================================================

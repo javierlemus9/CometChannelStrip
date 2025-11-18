@@ -12,7 +12,8 @@ namespace viator::dsp::processors
     enum class ProcessorType
     {
         kReduction,
-        kAmplification
+        kAmplification,
+        kTest
     };
 
     struct ProcessorDefinition
@@ -24,7 +25,7 @@ namespace viator::dsp::processors
         std::function<std::unique_ptr<juce::AudioProcessorEditor>(juce::AudioProcessor &)> createEditor;
     };
 
-    inline const std::vector<ProcessorDefinition> &getProcessorRegistry()
+    inline const std::vector<ProcessorDefinition>& getProcessorRegistry()
     {
         static const std::vector<ProcessorDefinition> registry = {
                 {
@@ -35,9 +36,9 @@ namespace viator::dsp::processors
                         {
                             return std::make_unique<viator::dsp::processors::ReductionProcessor>(id);
                         },
-                        [](juce::AudioProcessor &processor)
+                        [](juce::AudioProcessor& processor)
                         {
-                            auto &type = dynamic_cast<viator::dsp::processors::ReductionProcessor &>(processor);
+                            auto& type = dynamic_cast<viator::dsp::processors::ReductionProcessor&>(processor);
                             return std::make_unique<viator::gui::editors::ReductionEditor>(type);
                         }
                 },
@@ -49,12 +50,26 @@ namespace viator::dsp::processors
                         {
                             return std::make_unique<viator::dsp::processors::AmplificationProcessor>(id);
                         },
-                        [](juce::AudioProcessor &processor)
+                        [](juce::AudioProcessor& processor)
                         {
-                            auto &typed = dynamic_cast<viator::dsp::processors::AmplificationProcessor &>(processor);
+                            auto& typed = dynamic_cast<viator::dsp::processors::AmplificationProcessor&>(processor);
                             return std::make_unique<viator::gui::editors::AmplificationEditor>(typed);
                         }
                 },
+                {
+                        ProcessorType::kTest,
+                        "Test",
+                        "Test",
+                        [](int id)
+                        {
+                            return std::make_unique<viator::dsp::processors::TestProcessor>(id);
+                        },
+                        [](juce::AudioProcessor& processor)
+                        {
+                            auto& typed = dynamic_cast<viator::dsp::processors::TestProcessor&>(processor);
+                            return std::make_unique<viator::gui::editors::TestEditor>(typed);
+                        }
+                }
         };
 
         return registry;
@@ -62,73 +77,70 @@ namespace viator::dsp::processors
 
     inline juce::String toString(ProcessorType type)
     {
-        for (const auto& def : getProcessorRegistry())
-        {
+        for (const auto &def: getProcessorRegistry())
             if (def.type == type)
-            {
                 return def.name;
-            }
-
-            jassertfalse;
-            return {};
-        }
-    }
-
-    inline ProcessorType processorTypeFromString(const juce::String& name)
-    {
-        for (const auto& def : getProcessorRegistry())
-        {
-            if (def.name == name)
-            {
-                return def.type;
-            }
-        }
 
         jassertfalse;
+        return {};
     }
 
-    inline std::unique_ptr<viator::dsp::processors::BaseProcessor> createProcessorByType(ProcessorType type, int index)
+    inline ProcessorType processorTypeFromString(const juce::String &name)
+    {
+        for (const auto &def: getProcessorRegistry())
+            if (def.name == name)
+                return def.type;
+
+        jassertfalse;
+        return ProcessorType::kReduction;
+    }
+
+    inline std::unique_ptr<BaseProcessor> createProcessorByType(ProcessorType type, int index)
     {
         for (const auto& def : getProcessorRegistry())
-        {
             if (def.type == type)
-            {
-                return std::unique_ptr<viator::dsp::processors::BaseProcessor>
-                        (dynamic_cast<viator::dsp::processors::BaseProcessor*>(def.createProcessor(index).release()));
-                jassertfalse;
-            }
-        }
+                return std::unique_ptr<BaseProcessor>(static_cast<BaseProcessor*>(def.createProcessor(index).release()));
+
+        jassertfalse;
+        return nullptr;
     }
 
-    inline std::unique_ptr<juce::AudioProcessorEditor> createEditorForProcessor
-    (juce::AudioProcessor* processor)
+    inline std::unique_ptr<juce::AudioProcessorEditor> createEditorForProcessor(juce::AudioProcessor *processor)
     {
-        for (const auto& def : getProcessorRegistry())
+        DBG("Looking up editor for processor name: " + processor->getName());
+
+        for (const auto &def: getProcessorRegistry())
         {
+            DBG("  Checking registry name: " + def.name);
             if (toString(def.type) == processor->getName())
             {
+                DBG("  Match found! Creating editor for: " + def.name);
                 return def.createEditor(*processor);
             }
         }
 
+        DBG("!! No match found. Falling back or asserting.");
+        // fallback
+        if (auto *bc = dynamic_cast<viator::dsp::processors::ReductionProcessor *>(processor))
+            return std::make_unique<viator::gui::editors::ReductionEditor>(*bc);
+
         jassertfalse;
+        return nullptr;
     }
 
-    inline std::optional<ProcessorType> getProcessorTypeForProcessor(viator::dsp::processors::BaseProcessor* processor)
+
+    inline std::optional<ProcessorType> getProcessorTypeForProcessor(juce::AudioProcessor *processor)
     {
-        if (!processor)
-        {
+        if (processor == nullptr)
             return std::nullopt;
-        }
 
-        for (const auto& def : getProcessorRegistry())
+        for (const auto &def: getProcessorRegistry())
         {
+            // We use the processor's name (set in the constructor) as an identifier
             if (processor->getName() == def.name)
-            {
                 return def.type;
-            }
-
-            return std::nullopt;
         }
+
+        return std::nullopt;
     }
 }
