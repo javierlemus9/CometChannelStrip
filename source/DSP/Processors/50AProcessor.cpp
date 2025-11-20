@@ -6,7 +6,9 @@ namespace viator::dsp::processors
 
 //==============================================================================
     AmplificationProcessor::AmplificationProcessor(int id)
-            : viator::dsp::processors::BaseProcessor(id)
+            : BaseProcessor(BusesProperties()
+                                    .withInput("Input", juce::AudioChannelSet::stereo(), true)
+                                    .withOutput("Output", juce::AudioChannelSet::stereo(), true))
     {
     }
 
@@ -88,7 +90,7 @@ namespace viator::dsp::processors
         juce::ignoreUnused(sampleRate, samplesPerBlock);
 
         juce::dsp::ProcessSpec spec;
-        spec.sampleRate = sampleRate;
+        spec.sampleRate = sampleRate <= 0 ? 44100.0f : sampleRate;
         spec.maximumBlockSize = samplesPerBlock;
         spec.numChannels = getTotalNumOutputChannels();
 

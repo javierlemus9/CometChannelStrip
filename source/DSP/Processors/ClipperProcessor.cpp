@@ -6,11 +6,36 @@ namespace viator::dsp::processors
 
 //==============================================================================
     ClipperProcessor::ClipperProcessor(int id)
-            : viator::dsp::processors::BaseProcessor(id)
+            : BaseProcessor(BusesProperties()
+                                    .withInput("Input", juce::AudioChannelSet::stereo(), true)
+                                    .withOutput("Output", juce::AudioChannelSet::stereo(), true))
     {
+        BaseProcessor::setProcessorID(id);
+        auto layout = createParameterLayout(id);
+        initTreeState(this, std::move(layout));
+        parameters = std::make_unique<ClipperParameters::parameters>(getTreeState(), id);
+        getTreeState().addParameterListener(ClipperParameters::driveID + juce::String(id), this);
     }
 
     ClipperProcessor::~ClipperProcessor()
+    {
+    }
+
+    juce::AudioProcessorValueTreeState::ParameterLayout ClipperProcessor::createParameterLayout(int id)
+    {
+        std::vector<std::unique_ptr<juce::RangedAudioParameter> > params;
+
+        params.push_back(std::make_unique<juce::AudioParameterFloat>(
+                juce::ParameterID{ClipperParameters::driveID + juce::String(id), 1},
+                ClipperParameters::driveName + juce::String(id),
+                0.0f,
+                30.0f,
+                0.0f));
+
+        return {params.begin(), params.end()};
+    }
+
+    void ClipperProcessor::parameterChanged(const juce::String &parameterID, float newValue)
     {
     }
 
@@ -79,6 +104,18 @@ namespace viator::dsp::processors
         juce::ignoreUnused(index, newName);
     }
 
+    void ClipperProcessor::updateParameters()
+    {
+        for (auto& drive : m_drive_smoothers)
+        {
+            if (parameters->driveParam)
+            {
+                const auto db_drive = juce::Decibels::decibelsToGain(parameters->driveParam->get());
+                drive.setTargetValue(db_drive);
+            }
+        }
+    }
+
 
 //==============================================================================
     void ClipperProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
@@ -86,7 +123,10 @@ namespace viator::dsp::processors
         // Use this method as the place to do any pre-playback
         // initialisation that you need..
         juce::ignoreUnused(sampleRate, samplesPerBlock);
-
+        for (auto& drive : m_drive_smoothers)
+        {
+            drive.reset(sampleRate <= 0 ? 44100.0f : sampleRate, 0.02);
+        }
     }
 
     void ClipperProcessor::releaseResources()
@@ -124,13 +164,16 @@ namespace viator::dsp::processors
     {
         juce::ignoreUnused(midiMessages);
 
+        updateParameters();
+
         for (int channel = 0; channel < buffer.getNumChannels(); ++channel)
         {
             auto *data = buffer.getWritePointer(channel);
             for (int sample = 0; sample < buffer.getNumSamples(); ++sample)
             {
+                const auto drive = m_drive_smoothers[channel].getNextValue();
                 const auto xn = data[sample];
-                const auto yn = std::tanh(xn * 5.0f);
+                const auto yn = std::tanh(xn * drive);
                 data[sample] = yn;
             }
         }

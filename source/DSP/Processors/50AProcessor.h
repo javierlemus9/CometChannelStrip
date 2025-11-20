@@ -6,6 +6,8 @@
 #include <juce_audio_processors/juce_audio_processors.h>
 #include "BaseProcessor.h"
 
+
+
 namespace viator::dsp::processors
 {
 class AmplificationProcessor : public viator::dsp::processors::BaseProcessor

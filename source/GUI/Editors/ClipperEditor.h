@@ -22,5 +22,8 @@ namespace viator::gui::editors
 
     private:
         viator::dsp::processors::ClipperProcessor &processorRef;
+
+        juce::Slider m_drive_slider;
+        std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> m_drive_attach;
     };
 }

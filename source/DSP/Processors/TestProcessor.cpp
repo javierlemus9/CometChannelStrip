@@ -6,7 +6,9 @@ namespace viator::dsp::processors
 
 //==============================================================================
     TestProcessor::TestProcessor(int id)
-            : viator::dsp::processors::BaseProcessor(id)
+            : BaseProcessor(BusesProperties()
+                                    .withInput("Input", juce::AudioChannelSet::stereo(), true)
+                                    .withOutput("Output", juce::AudioChannelSet::stereo(), true))
     {
     }
 
