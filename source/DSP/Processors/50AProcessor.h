@@ -8,12 +8,12 @@
 
 namespace viator::dsp::processors
 {
-class ReductionProcessor : public viator::dsp::processors::BaseProcessor
+class AmplificationProcessor : public viator::dsp::processors::BaseProcessor
     {
     public:
         //==============================================================================
-        ReductionProcessor(int id);
-        ~ReductionProcessor() override;
+        AmplificationProcessor(int id);
+        ~AmplificationProcessor() override;
 
         //==============================================================================
         void prepareToPlay (double sampleRate, int samplesPerBlock) override;
@@ -48,8 +48,9 @@ class ReductionProcessor : public viator::dsp::processors::BaseProcessor
 
     private:
 
+        std::array<juce::dsp::LinkwitzRileyFilter<float>, 2> m_lp_filter;
         //==============================================================================
-        JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ReductionProcessor)
+        JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AmplificationProcessor)
     };
 }
 

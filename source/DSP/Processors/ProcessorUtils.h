@@ -11,8 +11,8 @@ namespace viator::dsp::processors
 {
     enum class ProcessorType
     {
-        kReduction,
-        kAmplification,
+        kClipper,
+        k50A,
         kTest
     };
 
@@ -29,21 +29,21 @@ namespace viator::dsp::processors
     {
         static const std::vector<ProcessorDefinition> registry = {
                 {
-                        ProcessorType::kReduction,
+                        ProcessorType::kClipper,
                         "Reduction",
                         "Test",
                         [](int id)
                         {
-                            return std::make_unique<viator::dsp::processors::ReductionProcessor>(id);
+                            return std::make_unique<viator::dsp::processors::ClipperProcessor>(id);
                         },
                         [](juce::AudioProcessor& processor)
                         {
-                            auto& type = dynamic_cast<viator::dsp::processors::ReductionProcessor&>(processor);
-                            return std::make_unique<viator::gui::editors::ReductionEditor>(type);
+                            auto& type = dynamic_cast<viator::dsp::processors::ClipperProcessor&>(processor);
+                            return std::make_unique<viator::gui::editors::ClipperEditor>(type);
                         }
                 },
                 {
-                        ProcessorType::kAmplification,
+                        ProcessorType::k50A,
                         "Amplification",
                         "Test",
                         [](int id)
@@ -92,7 +92,7 @@ namespace viator::dsp::processors
                 return def.type;
 
         jassertfalse;
-        return ProcessorType::kReduction;
+        return ProcessorType::kClipper;
     }
 
     inline std::unique_ptr<BaseProcessor> createProcessorByType(ProcessorType type, int index)
@@ -121,8 +121,8 @@ namespace viator::dsp::processors
 
         DBG("!! No match found. Falling back or asserting.");
         // fallback
-        if (auto *bc = dynamic_cast<viator::dsp::processors::ReductionProcessor *>(processor))
-            return std::make_unique<viator::gui::editors::ReductionEditor>(*bc);
+        if (auto *bc = dynamic_cast<viator::dsp::processors::ClipperProcessor *>(processor))
+            return std::make_unique<viator::gui::editors::ClipperEditor>(*bc);
 
         jassertfalse;
         return nullptr;

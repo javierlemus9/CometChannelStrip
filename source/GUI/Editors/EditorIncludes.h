@@ -5,6 +5,6 @@
 #pragma once
 
 #include "BaseEditor.h"
-#include "ReductionEditor.h"
-#include "AmplificationEditor.h"
+#include "ClipperEditor.h"
+#include "50AEditor.h"
 #include "TestEditor.h"

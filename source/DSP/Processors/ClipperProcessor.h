@@ -8,12 +8,12 @@
 
 namespace viator::dsp::processors
 {
-class AmplificationProcessor : public viator::dsp::processors::BaseProcessor
+class ClipperProcessor : public viator::dsp::processors::BaseProcessor
     {
     public:
         //==============================================================================
-        AmplificationProcessor(int id);
-        ~AmplificationProcessor() override;
+        ClipperProcessor(int id);
+        ~ClipperProcessor() override;
 
         //==============================================================================
         void prepareToPlay (double sampleRate, int samplesPerBlock) override;
@@ -49,7 +49,7 @@ class AmplificationProcessor : public viator::dsp::processors::BaseProcessor
     private:
 
         //==============================================================================
-        JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AmplificationProcessor)
+        JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ClipperProcessor)
     };
 }
 

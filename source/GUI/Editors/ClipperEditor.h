@@ -4,16 +4,16 @@
 
 #pragma once
 
-#include "../../DSP/Processors/ReductionProcessor.h"
+#include "../../DSP/Processors/ClipperProcessor.h"
 
 namespace viator::gui::editors
 {
-    class ReductionEditor : public juce::AudioProcessorEditor
+    class ClipperEditor : public juce::AudioProcessorEditor
     {
     public:
-        explicit ReductionEditor(viator::dsp::processors::ReductionProcessor &);
+        explicit ClipperEditor(viator::dsp::processors::ClipperProcessor &);
 
-        ~ReductionEditor() override;
+        ~ClipperEditor() override;
 
         //==============================================================================
         void paint(juce::Graphics &) override;
@@ -21,6 +21,6 @@ namespace viator::gui::editors
         void resized() override;
 
     private:
-        viator::dsp::processors::ReductionProcessor &processorRef;
+        viator::dsp::processors::ClipperProcessor &processorRef;
     };
 }

@@ -1,26 +1,26 @@
-#include "ReductionProcessor.h"
-#include "../../GUI/Editors/ReductionEditor.h"
+#include "50AProcessor.h"
+#include "../../GUI/Editors/50AEditor.h"
 
 namespace viator::dsp::processors
 {
 
 //==============================================================================
-    ReductionProcessor::ReductionProcessor(int id)
+    AmplificationProcessor::AmplificationProcessor(int id)
             : viator::dsp::processors::BaseProcessor(id)
     {
     }
 
-    ReductionProcessor::~ReductionProcessor()
+    AmplificationProcessor::~AmplificationProcessor()
     {
     }
 
 //==============================================================================
-    const juce::String ReductionProcessor::getName() const
+    const juce::String AmplificationProcessor::getName() const
     {
-        return "Reduction";
+        return "Amplification";
     }
 
-    bool ReductionProcessor::acceptsMidi() const
+    bool AmplificationProcessor::acceptsMidi() const
     {
 #if JucePlugin_WantsMidiInput
         return true;
@@ -29,7 +29,7 @@ namespace viator::dsp::processors
 #endif
     }
 
-    bool ReductionProcessor::producesMidi() const
+    bool AmplificationProcessor::producesMidi() const
     {
 #if JucePlugin_ProducesMidiOutput
         return true;
@@ -38,7 +38,7 @@ namespace viator::dsp::processors
 #endif
     }
 
-    bool ReductionProcessor::isMidiEffect() const
+    bool AmplificationProcessor::isMidiEffect() const
     {
 #if JucePlugin_IsMidiEffect
         return true;
@@ -47,55 +47,66 @@ namespace viator::dsp::processors
 #endif
     }
 
-    double ReductionProcessor::getTailLengthSeconds() const
+    double AmplificationProcessor::getTailLengthSeconds() const
     {
         return 0.0;
     }
 
-    int ReductionProcessor::getNumPrograms()
+    int AmplificationProcessor::getNumPrograms()
     {
         return 1;   // NB: some hosts don't cope very well if you tell them there are 0 programs,
         // so this should be at least 1, even if you're not really implementing programs.
     }
 
-    int ReductionProcessor::getCurrentProgram()
+    int AmplificationProcessor::getCurrentProgram()
     {
         return 0;
     }
 
-    void ReductionProcessor::setCurrentProgram(int index)
+    void AmplificationProcessor::setCurrentProgram(int index)
     {
         juce::ignoreUnused(index);
     }
 
-    const juce::String ReductionProcessor::getProgramName(int index)
+    const juce::String AmplificationProcessor::getProgramName(int index)
     {
         juce::ignoreUnused(index);
         return {};
     }
 
-    void ReductionProcessor::changeProgramName(int index, const juce::String &newName)
+    void AmplificationProcessor::changeProgramName(int index, const juce::String &newName)
     {
         juce::ignoreUnused(index, newName);
     }
 
 
 //==============================================================================
-    void ReductionProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
+    void AmplificationProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
     {
         // Use this method as the place to do any pre-playback
         // initialisation that you need..
         juce::ignoreUnused(sampleRate, samplesPerBlock);
 
+        juce::dsp::ProcessSpec spec;
+        spec.sampleRate = sampleRate;
+        spec.maximumBlockSize = samplesPerBlock;
+        spec.numChannels = getTotalNumOutputChannels();
+
+        for (auto& filter : m_lp_filter)
+        {
+            filter.prepare(spec);
+            filter.setCutoffFrequency(800.0f);
+            filter.setType(juce::dsp::LinkwitzRileyFilterType::lowpass);
+        }
     }
 
-    void ReductionProcessor::releaseResources()
+    void AmplificationProcessor::releaseResources()
     {
         // When playback stops, you can use this as an opportunity to free up any
         // spare memory, etc.
     }
 
-    bool ReductionProcessor::isBusesLayoutSupported(const BusesLayout &layouts) const
+    bool AmplificationProcessor::isBusesLayoutSupported(const BusesLayout &layouts) const
     {
 #if JucePlugin_IsMidiEffect
         juce::ignoreUnused (layouts);
@@ -119,27 +130,36 @@ namespace viator::dsp::processors
 #endif
     }
 
-    void ReductionProcessor::processBlock(juce::AudioBuffer<float> &buffer,
+    void AmplificationProcessor::processBlock(juce::AudioBuffer<float> &buffer,
                                      juce::MidiBuffer &midiMessages)
     {
         juce::ignoreUnused(midiMessages);
 
-        buffer.applyGain(0.5f);
+        for (int channel = 0; channel < buffer.getNumChannels(); ++channel)
+        {
+            auto *data = buffer.getWritePointer(channel);
+            for (int sample = 0; sample < buffer.getNumSamples(); ++sample)
+            {
+                const auto xn = data[sample];
+                const auto yn = m_lp_filter[channel].processSample(channel, xn);
+                data[sample] = yn;
+            }
+        }
     }
 
 //==============================================================================
-    bool ReductionProcessor::hasEditor() const
+    bool AmplificationProcessor::hasEditor() const
     {
         return true; // (change this to false if you choose to not supply an editor)
     }
 
-    juce::AudioProcessorEditor *ReductionProcessor::createEditor()
+    juce::AudioProcessorEditor *AmplificationProcessor::createEditor()
     {
-        return new viator::gui::editors::ReductionEditor (*this);
+        return new viator::gui::editors::AmplificationEditor (*this);
     }
 
 //==============================================================================
-    void ReductionProcessor::getStateInformation(juce::MemoryBlock &destData)
+    void AmplificationProcessor::getStateInformation(juce::MemoryBlock &destData)
     {
         // You should use this method to store your parameters in the memory block.
         // You could do that either as raw data, or use the XML or ValueTree classes
@@ -147,7 +167,7 @@ namespace viator::dsp::processors
         juce::ignoreUnused(destData);
     }
 
-    void ReductionProcessor::setStateInformation(const void *data, int sizeInBytes)
+    void AmplificationProcessor::setStateInformation(const void *data, int sizeInBytes)
     {
         // You should use this method to restore your parameters from this memory block,
         // whose contents will have been created by the getStateInformation() call.

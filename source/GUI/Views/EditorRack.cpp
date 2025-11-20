@@ -10,8 +10,7 @@ namespace viator::gui::views
 {
     EditorRack::EditorRack(AudioPluginAudioProcessor &p) : processorRef(p)
     {
-        addEditor(viator::dsp::processors::ProcessorType::kReduction);
-        addEditor(viator::dsp::processors::ProcessorType::kAmplification);
+        rebuild_editors();
     }
 
     EditorRack::~EditorRack()
@@ -73,6 +72,7 @@ namespace viator::gui::views
                 auto editor = viator::dsp::processors::createEditorForProcessor(processor);
                 if (editor) {
 
+                    editor->addMouseListener(this, false);
                     m_editors.push_back(std::move(editor));
                     addAndMakeVisible(*m_editors.back());
                 }

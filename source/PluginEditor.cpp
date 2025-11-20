@@ -14,7 +14,7 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
                                                                                                      m_oversampling_menu);
 
     addAndMakeVisible(m_rack);
-    setSize (1200, 720);
+    setSize (1500, 700);
 }
 
 AudioPluginAudioProcessorEditor::~AudioPluginAudioProcessorEditor()

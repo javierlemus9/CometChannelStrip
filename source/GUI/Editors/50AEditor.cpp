@@ -2,7 +2,7 @@
 // Created by Landon Viator on 11/14/25.
 //
 
-#include "AmplificationEditor.h"
+#include "50AEditor.h"
 
 namespace viator::gui::editors
 {
@@ -22,7 +22,7 @@ namespace viator::gui::editors
     void AmplificationEditor::paint(juce::Graphics &g)
     {
         g.fillAll(juce::Colours::red);
-        g.drawText("Amplification", 0, 0, getWidth(), getHeight(), juce::Justification::centred);
+        g.drawText("50A", 0, 0, getWidth(), getHeight(), juce::Justification::centred);
     }
 
     void AmplificationEditor::resized()

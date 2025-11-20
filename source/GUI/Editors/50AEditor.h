@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "../../DSP/Processors/AmplificationProcessor.h"
+#include "../../DSP/Processors/50AProcessor.h"
 
 namespace viator::gui::editors
 {

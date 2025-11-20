@@ -1,26 +1,26 @@
-#include "AmplificationProcessor.h"
-#include "../../GUI/Editors/AmplificationEditor.h"
+#include "ClipperProcessor.h"
+#include "../../GUI/Editors/ClipperEditor.h"
 
 namespace viator::dsp::processors
 {
 
 //==============================================================================
-    AmplificationProcessor::AmplificationProcessor(int id)
+    ClipperProcessor::ClipperProcessor(int id)
             : viator::dsp::processors::BaseProcessor(id)
     {
     }
 
-    AmplificationProcessor::~AmplificationProcessor()
+    ClipperProcessor::~ClipperProcessor()
     {
     }
 
 //==============================================================================
-    const juce::String AmplificationProcessor::getName() const
+    const juce::String ClipperProcessor::getName() const
     {
-        return "Amplification";
+        return "Reduction";
     }
 
-    bool AmplificationProcessor::acceptsMidi() const
+    bool ClipperProcessor::acceptsMidi() const
     {
 #if JucePlugin_WantsMidiInput
         return true;
@@ -29,7 +29,7 @@ namespace viator::dsp::processors
 #endif
     }
 
-    bool AmplificationProcessor::producesMidi() const
+    bool ClipperProcessor::producesMidi() const
     {
 #if JucePlugin_ProducesMidiOutput
         return true;
@@ -38,7 +38,7 @@ namespace viator::dsp::processors
 #endif
     }
 
-    bool AmplificationProcessor::isMidiEffect() const
+    bool ClipperProcessor::isMidiEffect() const
     {
 #if JucePlugin_IsMidiEffect
         return true;
@@ -47,41 +47,41 @@ namespace viator::dsp::processors
 #endif
     }
 
-    double AmplificationProcessor::getTailLengthSeconds() const
+    double ClipperProcessor::getTailLengthSeconds() const
     {
         return 0.0;
     }
 
-    int AmplificationProcessor::getNumPrograms()
+    int ClipperProcessor::getNumPrograms()
     {
         return 1;   // NB: some hosts don't cope very well if you tell them there are 0 programs,
         // so this should be at least 1, even if you're not really implementing programs.
     }
 
-    int AmplificationProcessor::getCurrentProgram()
+    int ClipperProcessor::getCurrentProgram()
     {
         return 0;
     }
 
-    void AmplificationProcessor::setCurrentProgram(int index)
+    void ClipperProcessor::setCurrentProgram(int index)
     {
         juce::ignoreUnused(index);
     }
 
-    const juce::String AmplificationProcessor::getProgramName(int index)
+    const juce::String ClipperProcessor::getProgramName(int index)
     {
         juce::ignoreUnused(index);
         return {};
     }
 
-    void AmplificationProcessor::changeProgramName(int index, const juce::String &newName)
+    void ClipperProcessor::changeProgramName(int index, const juce::String &newName)
     {
         juce::ignoreUnused(index, newName);
     }
 
 
 //==============================================================================
-    void AmplificationProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
+    void ClipperProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
     {
         // Use this method as the place to do any pre-playback
         // initialisation that you need..
@@ -89,13 +89,13 @@ namespace viator::dsp::processors
 
     }
 
-    void AmplificationProcessor::releaseResources()
+    void ClipperProcessor::releaseResources()
     {
         // When playback stops, you can use this as an opportunity to free up any
         // spare memory, etc.
     }
 
-    bool AmplificationProcessor::isBusesLayoutSupported(const BusesLayout &layouts) const
+    bool ClipperProcessor::isBusesLayoutSupported(const BusesLayout &layouts) const
     {
 #if JucePlugin_IsMidiEffect
         juce::ignoreUnused (layouts);
@@ -119,27 +119,36 @@ namespace viator::dsp::processors
 #endif
     }
 
-    void AmplificationProcessor::processBlock(juce::AudioBuffer<float> &buffer,
-                                     juce::MidiBuffer &midiMessages)
+    void ClipperProcessor::processBlock(juce::AudioBuffer<float> &buffer,
+                                        juce::MidiBuffer &midiMessages)
     {
         juce::ignoreUnused(midiMessages);
 
-        buffer.applyGain(1.5f);
+        for (int channel = 0; channel < buffer.getNumChannels(); ++channel)
+        {
+            auto *data = buffer.getWritePointer(channel);
+            for (int sample = 0; sample < buffer.getNumSamples(); ++sample)
+            {
+                const auto xn = data[sample];
+                const auto yn = std::tanh(xn * 5.0f);
+                data[sample] = yn;
+            }
+        }
     }
 
 //==============================================================================
-    bool AmplificationProcessor::hasEditor() const
+    bool ClipperProcessor::hasEditor() const
     {
         return true; // (change this to false if you choose to not supply an editor)
     }
 
-    juce::AudioProcessorEditor *AmplificationProcessor::createEditor()
+    juce::AudioProcessorEditor *ClipperProcessor::createEditor()
     {
-        return new viator::gui::editors::AmplificationEditor (*this);
+        return new viator::gui::editors::ClipperEditor (*this);
     }
 
 //==============================================================================
-    void AmplificationProcessor::getStateInformation(juce::MemoryBlock &destData)
+    void ClipperProcessor::getStateInformation(juce::MemoryBlock &destData)
     {
         // You should use this method to store your parameters in the memory block.
         // You could do that either as raw data, or use the XML or ValueTree classes
@@ -147,7 +156,7 @@ namespace viator::dsp::processors
         juce::ignoreUnused(destData);
     }
 
-    void AmplificationProcessor::setStateInformation(const void *data, int sizeInBytes)
+    void ClipperProcessor::setStateInformation(const void *data, int sizeInBytes)
     {
         // You should use this method to restore your parameters from this memory block,
         // whose contents will have been created by the getStateInformation() call.

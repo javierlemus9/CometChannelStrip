@@ -15,13 +15,8 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
     m_parameters = std::make_unique<viator::parameters::parameters>(m_tree_state);
 
     m_processors.clear();
-    DBG("Num processors: " << m_processors.size());
-    addProcessor(viator::dsp::processors::ProcessorType::kReduction);
-    DBG("Num processors: " << m_processors.size());
-    addProcessor(viator::dsp::processors::ProcessorType::kTest);
-    DBG("Num processors: " << m_processors.size());
-    addProcessor(viator::dsp::processors::ProcessorType::kReduction);
-    DBG("Num processors: " << m_processors.size());
+    addProcessor(viator::dsp::processors::ProcessorType::kClipper);
+    addProcessor(viator::dsp::processors::ProcessorType::k50A);
 }
 
 AudioPluginAudioProcessor::~AudioPluginAudioProcessor()
@@ -223,13 +218,14 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
 //        m_process_blocks[static_cast<size_t>(oversampling_choice)].process(buffer, buffer.getNumSamples());
 //    }
 
-//    for (const auto& processor : m_processors)
-//    {
-//        if (processor)
-//        {
-//            processor->processBlock(buffer, midiMessages);
-//        }
-//    }
+    for (int i = 0; i < m_processors.size(); ++ i)
+    {
+        if (m_processors[i])
+        {
+            DBG("Processor " << i << " " << m_processors[i]->getName());
+            m_processors[i]->processBlock(buffer, midiMessages);
+        }
+    }
 }
 
 void AudioPluginAudioProcessor::addProcessor(viator::dsp::processors::ProcessorType type)
