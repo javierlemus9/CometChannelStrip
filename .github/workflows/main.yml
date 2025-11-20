@@ -1,12 +1,12 @@
 name: Build JUCE Plugin
 
 env:
-project_name: CometChannelStrip
+  project_name: CometChannelStrip
 
 on:
   push:
-  branches:
-    - main
+    branches:
+      - main
 
 jobs:
   build-mac:
