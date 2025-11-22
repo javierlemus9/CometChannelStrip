@@ -12,24 +12,24 @@ class AudioPluginAudioProcessor;
 
 namespace viator::gui::views
 {
-    class EditorRack : public juce::Component
+class EditorRack : public juce::Component, public juce::ActionBroadcaster
     {
     public:
         EditorRack(AudioPluginAudioProcessor &);
-
         ~EditorRack() override;
 
         void paint(juce::Graphics &g) override;
-
         void resized() override;
 
+        void rebuild_editors();
+
+    std::vector<std::unique_ptr<juce::AudioProcessorEditor>>& getEditors() { return m_editors; }
     private:
         AudioPluginAudioProcessor &processorRef;
         std::vector<std::unique_ptr<juce::AudioProcessorEditor>> m_editors;
 
         void addEditor(viator::dsp::processors::ProcessorType type);
 
-        void rebuild_editors();
 
         void mouseDown(const juce::MouseEvent &e) override;
         void mouseDrag(const juce::MouseEvent &e) override;

@@ -14,11 +14,21 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
                                                                                                      m_oversampling_menu);
 
     addAndMakeVisible(m_rack);
+    m_rack.addActionListener(this);
+    m_rack.rebuild_editors();
+    initMacroKnobs();
+
     setSize (1500, 700);
 }
 
 AudioPluginAudioProcessorEditor::~AudioPluginAudioProcessorEditor()
 {
+    for (auto& macro : m_macro_knobs)
+    {
+        macro.removeMouseListener(this);
+    }
+
+    m_rack.removeActionListener(this);
 }
 
 //==============================================================================
@@ -32,6 +42,7 @@ void AudioPluginAudioProcessorEditor::paint (juce::Graphics& g)
 
 void AudioPluginAudioProcessorEditor::resized()
 {
+    // OS MENU
     const auto padding = juce::roundToInt(getWidth() * 0.03);
     auto width = juce::roundToInt(getWidth() * 0.1);
     auto height = juce::roundToInt(getHeight() * 0.05);
@@ -39,11 +50,23 @@ void AudioPluginAudioProcessorEditor::resized()
     auto y = padding;
     m_oversampling_menu.setBounds(x, y, width, height);
 
+    // RACK
     width = getWidth();
     height = juce::roundToInt(getHeight() * 0.8);
     x = 0;
     y = getHeight() / 10;
     m_rack.setBounds(x, y, width, height);
+
+    // MACRO DIALS
+    x = juce::roundToInt(getWidth() * 0.026);
+    y = juce::roundToInt(getHeight() * 0.9);
+    width = juce::roundToInt(getWidth() * 0.05);
+    height = width;
+    for (auto& knob : m_macro_knobs)
+    {
+        knob.setBounds(x, y, width, height);
+        x += width * 2;
+    }
 }
 
 void AudioPluginAudioProcessorEditor::setComboBoxProps(juce::ComboBox &box, const juce::StringArray &items)
@@ -51,4 +74,67 @@ void AudioPluginAudioProcessorEditor::setComboBoxProps(juce::ComboBox &box, cons
     box.addItemList(items, 1);
     box.setSelectedId(1, juce::dontSendNotification);
     addAndMakeVisible(box);
+}
+
+void AudioPluginAudioProcessorEditor::initMacroKnobs()
+{
+    for (int i = 0; i < m_macro_knobs.size(); ++i)
+    {
+        m_macro_knobs[i].setSliderStyle(juce::Slider::RotaryVerticalDrag);
+        m_macro_knobs[i].setTextBoxStyle(juce::Slider::NoTextBox, false, 0, 0);
+        m_macro_knobs[i].setComponentID("macro" + juce::String(i+1) + "ID");
+        m_macro_knobs[i].addMouseListener(this, true);
+        m_macro_attaches.emplace_back(std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(processorRef
+                .getTreeState(), "macro" + juce::String(i+1) + "ID", m_macro_knobs[i]));
+        addAndMakeVisible(m_macro_knobs[i]);
+    }
+}
+
+void AudioPluginAudioProcessorEditor::changeListenerCallback(juce::ChangeBroadcaster *source)
+{
+    if (auto slider = dynamic_cast<viator::gui::widgets::BaseSlider*>(source))
+    {
+        const auto slider_id_to_map = slider->getComponentID();
+        DBG(slider->getComponentID());
+        processorRef.getMacroMap().addMacroAssignment(slider_id_to_map);
+    }
+}
+
+void AudioPluginAudioProcessorEditor::actionListenerCallback(const juce::String &message)
+{
+    if (message == viator::globals::ActionCommands::editorAdded)
+    {
+        for (auto& editor : m_rack.getEditors())
+        {
+            if (auto* base_editor = dynamic_cast<viator::gui::editors::BaseEditor*>(editor.get()))
+            {
+                for (auto& slider : base_editor->getSliders())
+                {
+                    slider->removeChangeListener(this);
+                    slider->addChangeListener(this);
+                }
+            }
+        }
+    }
+}
+
+void AudioPluginAudioProcessorEditor::mouseDown(const juce::MouseEvent &event)
+{
+    if (event.mods.isRightButtonDown())
+    {
+        if (auto* macro_slider = dynamic_cast<viator::gui::widgets::MacroSlider*>(event.eventComponent))
+        {
+            for (auto& macro : m_macro_knobs)
+            {
+                if (&macro != macro_slider)
+                    macro.enableMacroState(false);
+            }
+
+            const auto selected_macro = macro_slider->getComponentID();
+            macro_slider->toggleMacroState();
+            const auto macro_state = macro_slider->getMacroState();
+            processorRef.getMacroMap().setMacroLearnState(macro_state);
+            processorRef.getMacroMap().macroStateChanged(selected_macro);
+        }
+    }
 }

@@ -7,12 +7,15 @@
 namespace viator::gui::editors
 {
     ClipperEditor::ClipperEditor(viator::dsp::processors::ClipperProcessor &p)
-            : AudioProcessorEditor(&p), processorRef(p)
+            : viator::gui::editors::BaseEditor(p), processorRef(p)
     {
         juce::ignoreUnused(processorRef);
 
         m_drive_slider.setSliderStyle(juce::Slider::RotaryVerticalDrag);
         m_drive_slider.setTextBoxStyle(juce::Slider::TextBoxBelow, true, 32, 64);
+        m_drive_slider.addMouseListener(this, true);
+        m_drive_slider.setComponentID(ClipperParameters::driveID + juce::String(processorRef.getProcessorID()));
+        getSliders().push_back(&m_drive_slider);
         addAndMakeVisible(m_drive_slider);
 
         m_drive_attach = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(processorRef

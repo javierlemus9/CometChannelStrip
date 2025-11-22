@@ -6,6 +6,7 @@
 #include "DSP/ProcessBlock.h"
 #include "DSP/Processors/BaseProcessor.h"
 #include "DSP/Processors/ProcessorUtils.h"
+#include "Engine/MacroMap.h"
 //==============================================================================
 class AudioPluginAudioProcessor final : public juce::AudioProcessor, public juce::AudioProcessorValueTreeState::Listener
 {
@@ -56,6 +57,8 @@ public:
     std::vector<std::unique_ptr<viator::dsp::processors::BaseProcessor>>& getProcessors() { return m_processors; }
 
     std::atomic<bool> m_adding_processor {false};
+
+    viator::engine::MacroMap& getMacroMap() { return m_macro_map; }
 private:
 
     juce::AudioProcessorValueTreeState m_tree_state;
@@ -71,6 +74,8 @@ private:
     std::vector<std::unique_ptr<viator::dsp::processors::BaseProcessor>> m_processors;
 
     juce::CriticalSection m_processor_lock;
+
+    viator::engine::MacroMap m_macro_map;
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioPluginAudioProcessor)
 };

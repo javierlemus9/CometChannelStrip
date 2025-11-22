@@ -16,7 +16,12 @@ AudioPluginAudioProcessor::AudioPluginAudioProcessor()
 
     m_processors.clear();
     addProcessor(viator::dsp::processors::ProcessorType::kClipper);
-    addProcessor(viator::dsp::processors::ProcessorType::k50A);
+    addProcessor(viator::dsp::processors::ProcessorType::kClipper);
+
+    for (int i = 0; i < 10; ++i)
+    {
+        m_tree_state.addParameterListener("macro" + juce::String(i) + "ID", this);
+    }
 }
 
 AudioPluginAudioProcessor::~AudioPluginAudioProcessor()
@@ -95,39 +100,36 @@ juce::AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::c
     const auto items = viator::globals::Oversampling::items;
     params.push_back(std::make_unique<juce::AudioParameterChoice>(juce::ParameterID{viator::parameters::oversamplingChoiceID, 1},
                                                                   viator::parameters::oversamplingChoiceName, items, 0));
-    params.push_back(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{viator::parameters::consoleDriveID, 1},
-                                                                  viator::parameters::consoleDriveName, 0.0f, 100.0f,
-                                                                  0.0f));
 
-    params.push_back(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{viator::parameters::graphic1ID, 1},
-                                                                 viator::parameters::graphic1Name, -15.0f, 15.0f,
+    params.push_back(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{viator::parameters::macro1ID, 1},
+                                                                 viator::parameters::macro1Name, 0.0f, 1.0f,
                                                                  0.0f));
-    params.push_back(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{viator::parameters::graphic2ID, 1},
-                                                                 viator::parameters::graphic2Name, -15.0f, 15.0f,
+    params.push_back(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{viator::parameters::macro2ID, 1},
+                                                                 viator::parameters::macro2Name, 0.0f, 1.0f,
                                                                  0.0f));
-    params.push_back(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{viator::parameters::graphic3ID, 1},
-                                                                 viator::parameters::graphic3Name, -15.0f, 15.0f,
+    params.push_back(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{viator::parameters::macro3ID, 1},
+                                                                 viator::parameters::macro3Name, 0.0f, 1.0f,
                                                                  0.0f));
-    params.push_back(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{viator::parameters::graphic4ID, 1},
-                                                                 viator::parameters::graphic4Name, -15.0f, 15.0f,
+    params.push_back(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{viator::parameters::macro4ID, 1},
+                                                                 viator::parameters::macro4Name, 0.0f, 1.0f,
                                                                  0.0f));
-    params.push_back(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{viator::parameters::graphic5ID, 1},
-                                                                 viator::parameters::graphic5Name, -15.0f, 15.0f,
+    params.push_back(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{viator::parameters::macro5ID, 1},
+                                                                 viator::parameters::macro5Name, 0.0f, 1.0f,
                                                                  0.0f));
-    params.push_back(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{viator::parameters::graphic6ID, 1},
-                                                                 viator::parameters::graphic6Name, -15.0f, 15.0f,
+    params.push_back(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{viator::parameters::macro6ID, 1},
+                                                                 viator::parameters::macro6Name, 0.0f, 1.0f,
                                                                  0.0f));
-    params.push_back(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{viator::parameters::graphic7ID, 1},
-                                                                 viator::parameters::graphic7Name, -15.0f, 15.0f,
+    params.push_back(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{viator::parameters::macro7ID, 1},
+                                                                 viator::parameters::macro7Name, 0.0f, 1.0f,
                                                                  0.0f));
-    params.push_back(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{viator::parameters::graphic8ID, 1},
-                                                                 viator::parameters::graphic8Name, -15.0f, 15.0f,
+    params.push_back(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{viator::parameters::macro8ID, 1},
+                                                                 viator::parameters::macro8Name, 0.0f, 1.0f,
                                                                  0.0f));
-    params.push_back(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{viator::parameters::graphic9ID, 1},
-                                                                 viator::parameters::graphic9Name, -15.0f, 15.0f,
+    params.push_back(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{viator::parameters::macro9ID, 1},
+                                                                 viator::parameters::macro9Name, 0.0f, 1.0f,
                                                                  0.0f));
-    params.push_back(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{viator::parameters::graphic10ID, 1},
-                                                                 viator::parameters::graphic10Name, -15.0f, 15.0f,
+    params.push_back(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{viator::parameters::macro10ID, 1},
+                                                                 viator::parameters::macro10Name, 0.0f, 1.0f,
                                                                  0.0f));
 
 
@@ -136,7 +138,17 @@ juce::AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::c
 
 void AudioPluginAudioProcessor::parameterChanged(const juce::String &parameterID, float newValue)
 {
-
+    for (const auto &processor: m_processors)
+    {
+        if (const auto *module_processor = dynamic_cast<viator::dsp::processors::BaseProcessor *>(processor.get()))
+        {
+            auto &tree = module_processor->getTreeState();
+            if (auto *param = m_tree_state.getParameter(parameterID))
+            {
+                m_macro_map.update(tree, parameterID, newValue);
+            }
+        }
+    }
 }
 
 void AudioPluginAudioProcessor::updateParameters()
@@ -222,7 +234,6 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     {
         if (m_processors[i])
         {
-            DBG("Processor " << i << " " << m_processors[i]->getName());
             m_processors[i]->processBlock(buffer, midiMessages);
         }
     }

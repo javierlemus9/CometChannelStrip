@@ -10,7 +10,6 @@ namespace viator::gui::views
 {
     EditorRack::EditorRack(AudioPluginAudioProcessor &p) : processorRef(p)
     {
-        rebuild_editors();
     }
 
     EditorRack::~EditorRack()
@@ -53,6 +52,7 @@ namespace viator::gui::views
             if (editor) {
                 editor->addMouseListener(this, false);
                 m_editors.push_back(std::move(editor));
+                sendActionMessage(viator::globals::ActionCommands::editorAdded);
                 addAndMakeVisible(*m_editors.back());
             }
         }
@@ -74,6 +74,7 @@ namespace viator::gui::views
 
                     editor->addMouseListener(this, false);
                     m_editors.push_back(std::move(editor));
+                    sendActionMessage(viator::globals::ActionCommands::editorAdded);
                     addAndMakeVisible(*m_editors.back());
                 }
             }

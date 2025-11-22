@@ -5,10 +5,12 @@
 #pragma once
 
 #include "../../DSP/Processors/ClipperProcessor.h"
+#include "BaseEditor.h"
+#include "../Widgets/BaseSlider.h"
 
 namespace viator::gui::editors
 {
-    class ClipperEditor : public juce::AudioProcessorEditor
+    class ClipperEditor : public viator::gui::editors::BaseEditor
     {
     public:
         explicit ClipperEditor(viator::dsp::processors::ClipperProcessor &);
@@ -23,7 +25,7 @@ namespace viator::gui::editors
     private:
         viator::dsp::processors::ClipperProcessor &processorRef;
 
-        juce::Slider m_drive_slider;
+        viator::gui::widgets::BaseSlider m_drive_slider;
         std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> m_drive_attach;
     };
 }
